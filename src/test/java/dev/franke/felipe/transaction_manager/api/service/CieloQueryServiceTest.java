@@ -12,8 +12,10 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
@@ -21,6 +23,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @SpringBootTest
+@ExtendWith(MockitoExtension.class)
 class CieloQueryServiceTest {
 
     @Mock
@@ -51,7 +54,7 @@ class CieloQueryServiceTest {
         CieloResponseDTO mockedResponse = new CieloResponseDTO("1234", payment);
         when(restTemplate.getForObject(uri, CieloResponseDTO.class)).thenReturn(mockedResponse);
         // Act
-        CieloResponseDTO actual = cieloQueryService.getTransaction(paymentId);
+        CieloResponseDTO actual = cieloQueryService.getTransaction(paymentId, true);
         // Assert
         assertEquals(mockedResponse, actual);
         verify(restTemplate).getForObject(uri, CieloResponseDTO.class);
@@ -63,10 +66,9 @@ class CieloQueryServiceTest {
         // Arrange
         String paymentId = UUID.randomUUID().toString();
         String uri = cieloQueryService.getBaseURL() + "/" + paymentId;
-        CieloResponseDTO mockedResponse = null;
         when(restTemplate.getForObject(uri, CieloResponseDTO.class)).thenThrow(HttpClientErrorException.NotFound.class);
         // Act
-        CieloResponseDTO actualResponse = cieloQueryService.getTransaction(paymentId);
+        CieloResponseDTO actualResponse = cieloQueryService.getTransaction(paymentId, true);
         // Assert
         assertNull(actualResponse);
     }
@@ -81,7 +83,7 @@ class CieloQueryServiceTest {
         when(restTemplate.getForObject(uri, CieloResponseDTO.class))
                 .thenThrow(HttpClientErrorException.Unauthorized.class);
         // Act
-        CieloResponseDTO actualResponse = cieloQueryService.getTransaction(paymentId);
+        CieloResponseDTO actualResponse = cieloQueryService.getTransaction(paymentId, true);
         // Assert
         assertNull(actualResponse);
     }
@@ -95,7 +97,7 @@ class CieloQueryServiceTest {
         CieloResponseDTO mockedResponse = null;
         when(restTemplate.getForObject(uri, CieloResponseDTO.class)).thenThrow(RestClientException.class);
         // Act
-        CieloResponseDTO actualResponse = cieloQueryService.getTransaction(paymentId);
+        CieloResponseDTO actualResponse = cieloQueryService.getTransaction(paymentId, true);
         // Assert
         assertNull(actualResponse);
     }
@@ -106,7 +108,7 @@ class CieloQueryServiceTest {
         // Arrange
         String uri = cieloQueryService.getBaseURL() + "/" + null;
         // Act
-        CieloResponseDTO actualResponse = cieloQueryService.getTransaction(null);
+        CieloResponseDTO actualResponse = cieloQueryService.getTransaction(null, true);
         // Assert
         assertNull(actualResponse);
         verify(restTemplate, never()).getForObject(uri, CieloResponseDTO.class);

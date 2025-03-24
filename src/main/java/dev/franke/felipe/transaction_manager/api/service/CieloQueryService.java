@@ -69,9 +69,12 @@ public class CieloQueryService {
         }
     }
 
-    public CieloResponseDTO getTransaction(String paymentId) {
+    public CieloResponseDTO getTransaction(String paymentId, boolean test) {
         logger.info("Initializing method to call Cielo API");
-        this.setRestTemplate();
+        if (!test) {
+            this.setRestTemplate();
+        }
+
         checkCredentials();
         checkURL();
 
@@ -94,11 +97,11 @@ public class CieloQueryService {
         try {
             return this.getRestTemplate().getForObject(uri, CieloResponseDTO.class);
         } catch (RestClientException restClientException) {
-            logger.error("Exception calling API. Message: {}", restClientException.getMessage());
+            logger.error("Exception calling Cielo API. Message: {}", restClientException.getMessage());
             if (restClientException instanceof HttpClientErrorException.NotFound) {
                 logger.error("Unable to find transaction with given Payment Id");
             } else if (restClientException instanceof HttpClientErrorException.Unauthorized) {
-                logger.error("The acess was not granted");
+                logger.error("The acess to Cielo service was not granted");
             }
             return null;
         } catch (Exception other) {
