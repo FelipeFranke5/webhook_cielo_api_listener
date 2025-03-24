@@ -9,8 +9,6 @@ import dev.franke.felipe.transaction_manager.api.dto.cielo_query_response.CieloR
 import dev.franke.felipe.transaction_manager.api.dto.cielo_query_response.CieloResponsePaymentDTO;
 import dev.franke.felipe.transaction_manager.api.exception.CredentialsException;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -112,82 +110,6 @@ class CieloQueryServiceTest {
         // Assert
         assertNull(actualResponse);
         verify(restTemplate, never()).getForObject(uri, CieloResponseDTO.class);
-    }
-
-    @Test
-    @DisplayName("Method 'runTransactionTask' - All Valid PaymentId - Should Return CompletableFuture")
-    void runTransactionTask_ValidPaymentId_ShouldReturnCompletableFuture() {
-        // Arrange
-        String paymentId1 = UUID.randomUUID().toString();
-        String paymentId2 = UUID.randomUUID().toString();
-
-        String uri1 = cieloQueryService.getBaseURL() + "/" + paymentId1;
-        String uri2 = cieloQueryService.getBaseURL() + "/" + paymentId2;
-
-        CieloResponsePaymentDTO mockedPayment1 = new CieloResponsePaymentDTO(
-                "11111111111111111111", "CreditCard", UUID.randomUUID().toString(), 1);
-        CieloResponsePaymentDTO mockedPayment2 = new CieloResponsePaymentDTO(
-                "11111111111111111111", "CreditCard", UUID.randomUUID().toString(), 1);
-
-        CieloResponseDTO mockedResponse1 = new CieloResponseDTO("1234", mockedPayment1);
-        CieloResponseDTO mockedResponse2 = new CieloResponseDTO("1234", mockedPayment2);
-
-        when(restTemplate.getForObject(uri1, CieloResponseDTO.class)).thenReturn(mockedResponse1);
-        when(restTemplate.getForObject(uri2, CieloResponseDTO.class)).thenReturn(mockedResponse2);
-        // Act
-        CompletableFuture<CieloResponseDTO> futureResponse1 = cieloQueryService.runTransactionTask(paymentId1);
-        CompletableFuture<CieloResponseDTO> futureResponse2 = cieloQueryService.runTransactionTask(paymentId1);
-        // Assert
-        await().atMost(5, SECONDS).until(futureResponse1::isDone);
-        await().atMost(5, SECONDS).until(futureResponse2::isDone);
-    }
-
-    @Test
-    @DisplayName("Method 'runTransactionTask' - Partial Invalid PaymentId - Should Return partial null")
-    void runTransactionTask_HalfInvalidPaymentId_ShouldReturnHalfNull()
-            throws InterruptedException, ExecutionException {
-        // Arrange
-        String paymentId1 = UUID.randomUUID().toString();
-        String uri1 = cieloQueryService.getBaseURL() + "/" + paymentId1;
-
-        CieloResponsePaymentDTO mockedPayment1 = new CieloResponsePaymentDTO(
-                "11111111111111111111", "CreditCard", UUID.randomUUID().toString(), 1);
-
-        CieloResponseDTO mockedResponse1 = new CieloResponseDTO("1234", mockedPayment1);
-        when(restTemplate.getForObject(uri1, CieloResponseDTO.class)).thenReturn(mockedResponse1);
-        // Act
-        CompletableFuture<CieloResponseDTO> futureResponse1 = cieloQueryService.runTransactionTask(paymentId1);
-        CompletableFuture<CieloResponseDTO> futureResponse2 = cieloQueryService.runTransactionTask(null);
-        // Assert
-        await().atMost(5, SECONDS).until(() -> futureResponse1.isDone() && futureResponse2.isDone());
-        assertNotNull(futureResponse1.get());
-        assertNull(futureResponse2.get());
-    }
-
-    @Test
-    @DisplayName("Method 'runTransactionTask' - Partial Exception - Should Return partial null")
-    void runTransactionTask_HalfException_Should_ShouldReturnHalfNull()
-            throws InterruptedException, ExecutionException {
-        // Arrange
-        String paymentId1 = UUID.randomUUID().toString();
-        String paymentId2 = UUID.randomUUID().toString();
-
-        String uri1 = cieloQueryService.getBaseURL() + "/" + paymentId1;
-        String uri2 = cieloQueryService.getBaseURL() + "/" + paymentId2;
-
-        CieloResponsePaymentDTO mockedPayment1 = new CieloResponsePaymentDTO(
-                "11111111111111111111", "CreditCard", UUID.randomUUID().toString(), 1);
-
-        CieloResponseDTO mockedResponse1 = new CieloResponseDTO("1234", mockedPayment1);
-        when(restTemplate.getForObject(uri1, CieloResponseDTO.class)).thenReturn(mockedResponse1);
-        when(restTemplate.getForObject(uri2, CieloResponseDTO.class)).thenThrow(RestClientException.class);
-        // Act
-        CompletableFuture<CieloResponseDTO> futureResponse1 = cieloQueryService.runTransactionTask(paymentId1);
-        CompletableFuture<CieloResponseDTO> futureResponse2 = cieloQueryService.runTransactionTask(paymentId2);
-        // Assert
-        await().atMost(5, SECONDS).until(() -> futureResponse1.isDone() && futureResponse2.isDone());
-        assertNotNull(futureResponse1.get());
-        assertNull(futureResponse2.get());
     }
 
     @Test

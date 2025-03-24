@@ -9,7 +9,6 @@ import dev.franke.felipe.transaction_manager.api.model.TransactionModel;
 import dev.franke.felipe.transaction_manager.api.repository.TransactionRepository;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -38,8 +37,8 @@ public class TransactionService {
     }
 
     public TransactionDTO getTransactionById(String id) {
-        logger.info("\n\n- - - - - - - - RETRIEVING DATA");
-        logger.info("- - - - - - - - ID = {}", id);
+        logger.info("RETRIEVING DATA");
+        logger.info("ID = {}", id);
         UUID transactionId;
 
         try {
@@ -51,7 +50,7 @@ public class TransactionService {
         TransactionModel transaction =
                 transactionRepository.findById(transactionId).orElseThrow(() -> new TransactionNotFoundException(null));
 
-        logger.info("- - - - - - - - RETRIEVED ..");
+        logger.info("RETRIEVED ..");
 
         return new TransactionDTO(
                 transactionId,
@@ -60,10 +59,6 @@ public class TransactionService {
                 transaction.getPaymentType(),
                 transaction.getPaymentId(),
                 transaction.getPaymentStatus());
-    }
-
-    void runSaveTask(CieloResponseDTO cieloResponseDTO) {
-        CompletableFuture.runAsync(() -> saveTransactionToDB(transferToRequest(cieloResponseDTO)));
     }
 
     TransactionRequestDTO transferToRequest(CieloResponseDTO cieloResponseDTO) {
@@ -76,25 +71,21 @@ public class TransactionService {
     }
 
     void saveTransactionToDB(TransactionRequestDTO request) {
-        logger.info("\n\n- - - - - - - - RECEIVED CALL TO SAVE TRANSACTION");
-
+        logger.info("Initializing save method");
         TransactionModel.TransactionModelBuilder builder = new TransactionModel.TransactionModelBuilder();
         TransactionModel transaction = builder.orderId(request.orderId())
                 .acquirerTransactionId(request.acquirerTransactionId())
                 .paymentType(request.paymentType())
+                .paymentId(request.paymentId())
                 .paymentStatus(request.paymentStatus())
                 .build();
 
-        logger.info("- - - - - - - - AFTER BUILDING THE TRANSACTION, WE ARE ABOUT TO ATTEMPT TO SAVE ..");
-
         try {
             transactionRepository.save(transaction);
-            logger.info("SAVED WITH SUCESS");
+            logger.info("Successfully saved transaction");
         } catch (Exception exception) {
-            logger.error("UNABLE TO SAVE DUE TO AN ERROR: {}", exception.getMessage());
+            logger.error("Failed to save transaction with message: {}", exception.getMessage());
             logger.trace(String.valueOf(exception));
-        } finally {
-            logger.info("- - - - - - - - POST SAVE ..");
         }
     }
 }

@@ -5,15 +5,19 @@ import dev.franke.felipe.transaction_manager.api.exception.CredentialsException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
 public class CieloQueryService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CieloQueryService.class);
 
     @Value("${cielo.api.url.query}")
     private String baseURL;
@@ -25,10 +29,6 @@ public class CieloQueryService {
     private String merchantKey;
 
     private RestTemplate restTemplate;
-
-    public CieloQueryService() {
-        this.setRestTemplate();
-    }
 
     void checkCredentials() {
         List<String> errors = new ArrayList<>();
@@ -69,21 +69,23 @@ public class CieloQueryService {
         }
     }
 
-    public CompletableFuture<CieloResponseDTO> runTransactionTask(String paymentId) {
-        return CompletableFuture.supplyAsync(() -> getTransaction(paymentId));
-    }
-
     public CieloResponseDTO getTransaction(String paymentId) {
+        logger.info("Initializing method to call Cielo API");
+        this.setRestTemplate();
         checkCredentials();
         checkURL();
 
         if (paymentId == null || paymentId.isBlank() || paymentId.length() < 36) {
+            logger.error("PaymentId is null, blank or invalid");
+            logger.info("PaymentId: {}", paymentId);
             return null;
         }
 
         try {
             UUID.fromString(paymentId);
         } catch (IllegalArgumentException illegalArgumentException) {
+            logger.error("PaymentId is not valid UUID");
+            logger.info("PaymentId: {}", paymentId);
             return null;
         }
 
@@ -92,6 +94,16 @@ public class CieloQueryService {
         try {
             return this.getRestTemplate().getForObject(uri, CieloResponseDTO.class);
         } catch (RestClientException restClientException) {
+            logger.error("Exception calling API. Message: {}", restClientException.getMessage());
+            if (restClientException instanceof HttpClientErrorException.NotFound) {
+                logger.error("Unable to find transaction with given Payment Id");
+            } else if (restClientException instanceof HttpClientErrorException.Unauthorized) {
+                logger.error("The acess was not granted");
+            }
+            return null;
+        } catch (Exception other) {
+            logger.error("Unhandled error with message: {}", other.getMessage());
+            logger.error(String.valueOf(other));
             return null;
         }
     }
@@ -116,7 +128,6 @@ public class CieloQueryService {
         RestTemplateBuilder builder = new RestTemplateBuilder();
         restTemplate = builder.defaultHeader("MerchantId", this.getMerchantId())
                 .defaultHeader("MerchantKey", this.getMerchantKey())
-                .defaultHeader("Content-Type", "application/json")
                 .build();
     }
 }
