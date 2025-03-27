@@ -3,10 +3,12 @@ package dev.franke.felipe.transaction_manager.api.model;
 import dev.franke.felipe.transaction_manager.api.dto.cielo_query_response.CieloResponseDTO;
 import dev.franke.felipe.transaction_manager.api.dto.cielo_query_response.CieloResponsePaymentDTO;
 import jakarta.persistence.*;
+import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
 @Entity
+@Table(name = "acquirer_transactions")
 public class TransactionModel {
 
     public static CieloResponseDTO toCieloResponse(TransactionModel transaction) {
@@ -20,11 +22,13 @@ public class TransactionModel {
     }
 
     public static class TransactionModelBuilder {
+
         private String orderId;
         private String acquirerTransactionId;
         private String paymentType;
         private String paymentId;
         private Integer paymentStatus;
+        private OffsetDateTime createdAt;
 
         public TransactionModelBuilder orderId(String orderId) {
             this.orderId = orderId;
@@ -51,6 +55,11 @@ public class TransactionModel {
             return this;
         }
 
+        public TransactionModelBuilder createdAt(OffsetDateTime createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
         public TransactionModel build() {
             return new TransactionModel(this);
         }
@@ -64,6 +73,7 @@ public class TransactionModel {
         this.setPaymentType(builder.paymentType);
         this.setPaymentId(builder.paymentId);
         this.setPaymentStatus(builder.paymentStatus);
+        this.setCreatedAt(builder.createdAt);
     }
 
     public TransactionModel(
@@ -72,42 +82,38 @@ public class TransactionModel {
             String acquirerTransactionId,
             String paymentType,
             String paymentId,
-            Integer paymentStatus) {
-        this.setId(id);
-        this.setOrderId(orderId);
-        this.setAcquirerTransactionId(acquirerTransactionId);
-        this.setPaymentType(paymentType);
-        this.setPaymentId(paymentId);
-        this.setPaymentStatus(paymentStatus);
-    }
-
-    public TransactionModel(
-            String orderId, String acquirerTransactionId, String paymentType, String paymentId, Integer paymentStatus) {
+            Integer paymentStatus,
+            OffsetDateTime createdAt) {
+        this.id = id;
         this.orderId = orderId;
         this.acquirerTransactionId = acquirerTransactionId;
         this.paymentType = paymentType;
         this.paymentId = paymentId;
         this.paymentStatus = paymentStatus;
+        this.createdAt = createdAt;
     }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "order_id")
     private String orderId;
 
-    @Column(nullable = false, updatable = false, unique = true)
+    @Column(name = "acquirer_transaction_id")
     private String acquirerTransactionId;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "payment_type")
     private String paymentType;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "payment_id")
     private String paymentId;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "payment_status")
     private Integer paymentStatus;
+
+    @Column(name = "created_at")
+    private OffsetDateTime createdAt;
 
     public UUID getId() {
         return id;
@@ -157,6 +163,14 @@ public class TransactionModel {
         this.paymentStatus = paymentStatus;
     }
 
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof TransactionModel that)) return false;
@@ -165,7 +179,8 @@ public class TransactionModel {
                 && Objects.equals(getAcquirerTransactionId(), that.getAcquirerTransactionId())
                 && Objects.equals(getPaymentType(), that.getPaymentType())
                 && Objects.equals(getPaymentId(), that.getPaymentId())
-                && Objects.equals(getPaymentStatus(), that.getPaymentStatus());
+                && Objects.equals(getPaymentStatus(), that.getPaymentStatus())
+                && Objects.equals(getCreatedAt(), that.getCreatedAt());
     }
 
     @Override
@@ -176,7 +191,8 @@ public class TransactionModel {
                 getAcquirerTransactionId(),
                 getPaymentType(),
                 getPaymentId(),
-                getPaymentStatus());
+                getPaymentStatus(),
+                getCreatedAt());
     }
 
     @Override
@@ -184,6 +200,10 @@ public class TransactionModel {
         return "TransactionModel{" + "id="
                 + id + ", orderId='"
                 + orderId + '\'' + ", acquirerTransactionId='"
-                + acquirerTransactionId + '\'' + '}';
+                + acquirerTransactionId + '\'' + ", paymentType='"
+                + paymentType + '\'' + ", paymentId='"
+                + paymentId + '\'' + ", paymentStatus="
+                + paymentStatus + ", createdAt="
+                + createdAt + '}';
     }
 }

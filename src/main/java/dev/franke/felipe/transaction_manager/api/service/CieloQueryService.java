@@ -71,6 +71,7 @@ public class CieloQueryService {
 
     public CieloResponseDTO getTransaction(String paymentId, boolean test) {
         logger.info("Initializing method to call Cielo API");
+
         if (!test) {
             this.setRestTemplate();
         }

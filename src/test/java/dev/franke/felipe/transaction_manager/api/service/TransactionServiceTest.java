@@ -1,7 +1,5 @@
 package dev.franke.felipe.transaction_manager.api.service;
 
-import static java.time.Duration.*;
-import static org.awaitility.Awaitility.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -59,10 +57,10 @@ class TransactionServiceTest {
         // Assert
         assertNotNull(actual);
         assertEquals(4, actual.size());
-        assertEquals(actual.get(0).orderId(), transaction1.getOrderId());
-        assertEquals(actual.get(1).orderId(), transaction2.getOrderId());
-        assertEquals(actual.get(2).orderId(), transaction3.getOrderId());
-        assertEquals(actual.get(3).orderId(), transaction4.getOrderId());
+        assertEquals(actual.get(0).data().orderId(), transaction1.getOrderId());
+        assertEquals(actual.get(1).data().orderId(), transaction2.getOrderId());
+        assertEquals(actual.get(2).data().orderId(), transaction3.getOrderId());
+        assertEquals(actual.get(3).data().orderId(), transaction4.getOrderId());
     }
 
     @Test
@@ -76,9 +74,9 @@ class TransactionServiceTest {
         var actual = transactionService.getTransactionById(transaction1.getId().toString());
         // Assert
         assertNotNull(actual);
-        assertEquals(transaction1.getOrderId(), actual.orderId());
-        assertEquals(transaction1.getAcquirerTransactionId(), actual.acquirerTransactionId());
-        assertEquals(transaction1.getPaymentId(), actual.paymentId());
+        assertEquals(transaction1.getOrderId(), actual.data().orderId());
+        assertEquals(transaction1.getAcquirerTransactionId(), actual.data().acquirerTransactionId());
+        assertEquals(transaction1.getPaymentId(), actual.data().paymentId());
     }
 
     @Test

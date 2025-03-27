@@ -1,7 +1,5 @@
 package dev.franke.felipe.transaction_manager.api.service;
 
-import static java.util.concurrent.TimeUnit.*;
-import static org.awaitility.Awaitility.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -79,7 +77,6 @@ class CieloQueryServiceTest {
         // Arrange
         String paymentId = UUID.randomUUID().toString();
         String uri = cieloQueryService.getBaseURL() + "/" + paymentId;
-        CieloResponseDTO mockedResponse = null;
         when(restTemplate.getForObject(uri, CieloResponseDTO.class))
                 .thenThrow(HttpClientErrorException.Unauthorized.class);
         // Act
@@ -94,7 +91,6 @@ class CieloQueryServiceTest {
         // Arrange
         String paymentId = UUID.randomUUID().toString();
         String uri = cieloQueryService.getBaseURL() + "/" + paymentId;
-        CieloResponseDTO mockedResponse = null;
         when(restTemplate.getForObject(uri, CieloResponseDTO.class)).thenThrow(RestClientException.class);
         // Act
         CieloResponseDTO actualResponse = cieloQueryService.getTransaction(paymentId, true);

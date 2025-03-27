@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS transaction_error (
+    id SMALLINT PRIMARY KEY NOT NULL,
+    payment_id VARCHAR(36) NOT NULL,
+    message VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE acquirer_transactions ADD created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();

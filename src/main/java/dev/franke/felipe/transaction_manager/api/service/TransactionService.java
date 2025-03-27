@@ -2,6 +2,7 @@ package dev.franke.felipe.transaction_manager.api.service;
 
 import dev.franke.felipe.transaction_manager.api.dto.TransactionDTO;
 import dev.franke.felipe.transaction_manager.api.dto.TransactionRequestDTO;
+import dev.franke.felipe.transaction_manager.api.dto.TransactionResponseDTO;
 import dev.franke.felipe.transaction_manager.api.dto.cielo_query_response.CieloResponseDTO;
 import dev.franke.felipe.transaction_manager.api.exception.InvalidTransactionIdException;
 import dev.franke.felipe.transaction_manager.api.exception.TransactionNotFoundException;
@@ -23,20 +24,22 @@ public class TransactionService {
         this.transactionRepository = transactionRepository;
     }
 
-    public List<TransactionDTO> getListOfTransactions() {
-        List<TransactionModel> transactions = transactionRepository.findAll();
+    public List<TransactionResponseDTO> getListOfTransactions() {
+        var transactions = transactionRepository.findAll();
         return transactions.stream()
-                .map((transactionModel -> new TransactionDTO(
-                        transactionModel.getId(),
-                        transactionModel.getOrderId(),
-                        transactionModel.getAcquirerTransactionId(),
-                        transactionModel.getPaymentType(),
-                        transactionModel.getPaymentId(),
-                        transactionModel.getPaymentStatus())))
+                .map(transactionModel -> new TransactionResponseDTO(
+                        new TransactionDTO(
+                                transactionModel.getOrderId(),
+                                transactionModel.getAcquirerTransactionId(),
+                                transactionModel.getPaymentType(),
+                                transactionModel.getPaymentId(),
+                                transactionModel.getPaymentStatus()),
+                        transactionModel.getCreatedAt(),
+                        transactionModel.getId()))
                 .toList();
     }
 
-    public TransactionDTO getTransactionById(String id) {
+    public TransactionResponseDTO getTransactionById(String id) {
         logger.info("RETRIEVING DATA");
         logger.info("ID = {}", id);
         UUID transactionId;
@@ -52,13 +55,13 @@ public class TransactionService {
 
         logger.info("RETRIEVED ..");
 
-        return new TransactionDTO(
-                transactionId,
+        var data = new TransactionDTO(
                 transaction.getOrderId(),
                 transaction.getAcquirerTransactionId(),
                 transaction.getPaymentType(),
                 transaction.getPaymentId(),
                 transaction.getPaymentStatus());
+        return new TransactionResponseDTO(data, transaction.getCreatedAt(), transaction.getId());
     }
 
     TransactionRequestDTO transferToRequest(CieloResponseDTO cieloResponseDTO) {
