@@ -6,6 +6,7 @@ import dev.franke.felipe.transaction_manager.api.dto.TransactionResponseDTO;
 import dev.franke.felipe.transaction_manager.api.dto.cielo_query_response.CieloResponseDTO;
 import dev.franke.felipe.transaction_manager.api.exception.InvalidTransactionIdException;
 import dev.franke.felipe.transaction_manager.api.exception.TransactionNotFoundException;
+import dev.franke.felipe.transaction_manager.api.exception.TransactionServiceException;
 import dev.franke.felipe.transaction_manager.api.model.TransactionModel;
 import dev.franke.felipe.transaction_manager.api.repository.TransactionRepository;
 import java.util.List;
@@ -26,17 +27,17 @@ public class TransactionService {
 
     public List<TransactionResponseDTO> getListOfTransactions() {
         var transactions = transactionRepository.findAll();
-        return transactions.stream()
-                .map(transactionModel -> new TransactionResponseDTO(
-                        new TransactionDTO(
-                                transactionModel.getOrderId(),
-                                transactionModel.getAcquirerTransactionId(),
-                                transactionModel.getPaymentType(),
-                                transactionModel.getPaymentId(),
-                                transactionModel.getPaymentStatus()),
-                        transactionModel.getCreatedAt(),
-                        transactionModel.getId()))
-                .toList();
+        return streamToList(transactions);
+    }
+
+    public List<TransactionResponseDTO> getListOfTransactionsByPayment(String paymentId) {
+        try {
+            UUID.fromString(paymentId);
+            var results = transactionRepository.findByPaymentId(paymentId);
+            return streamToList(results);
+        } catch (IllegalArgumentException exception) {
+            throw new TransactionServiceException("invalid payment id format");
+        }
     }
 
     public TransactionResponseDTO getTransactionById(String id) {
@@ -50,7 +51,7 @@ public class TransactionService {
             throw new InvalidTransactionIdException(exception.getMessage());
         }
 
-        TransactionModel transaction =
+        var transaction =
                 transactionRepository.findById(transactionId).orElseThrow(() -> new TransactionNotFoundException(null));
 
         logger.info("RETRIEVED ..");
@@ -76,6 +77,7 @@ public class TransactionService {
     void saveTransactionToDB(TransactionRequestDTO request) {
         logger.info("Initializing save method");
         TransactionModel.TransactionModelBuilder builder = new TransactionModel.TransactionModelBuilder();
+
         TransactionModel transaction = builder.orderId(request.orderId())
                 .acquirerTransactionId(request.acquirerTransactionId())
                 .paymentType(request.paymentType())
@@ -90,5 +92,19 @@ public class TransactionService {
             logger.error("Failed to save transaction with message: {}", exception.getMessage());
             logger.trace(String.valueOf(exception));
         }
+    }
+
+    List<TransactionResponseDTO> streamToList(List<TransactionModel> list) {
+        return list.stream()
+                .map(transactionModel -> new TransactionResponseDTO(
+                        new TransactionDTO(
+                                transactionModel.getOrderId(),
+                                transactionModel.getAcquirerTransactionId(),
+                                transactionModel.getPaymentType(),
+                                transactionModel.getPaymentId(),
+                                transactionModel.getPaymentStatus()),
+                        transactionModel.getCreatedAt(),
+                        transactionModel.getId()))
+                .toList();
     }
 }
