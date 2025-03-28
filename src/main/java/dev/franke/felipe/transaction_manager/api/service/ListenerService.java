@@ -20,13 +20,13 @@ public class ListenerService {
     private TransactionService transactionService;
 
     @KafkaListener(id = "webhooklistener1", topics = "webhook-cielo")
-    public CompletableFuture<Void> consume(String paymentId) {
+    public CompletableFuture<Void> consume(final String paymentId) {
         logger.info("Received message with PaymentId: {}", paymentId);
         return CompletableFuture.supplyAsync(() -> cieloQueryService.getTransaction(paymentId, false))
                 .thenAccept(cieloResponseDTO -> {
                     if (cieloResponseDTO != null) {
                         logger.info("API Call to Cielo was successful. Attemping to save returned data");
-                        TransactionRequestDTO requestDTO = transactionService.transferToRequest(cieloResponseDTO);
+                        final TransactionRequestDTO requestDTO = transactionService.transferToRequest(cieloResponseDTO);
                         transactionService.saveTransactionToDB(requestDTO);
                     }
                 });
