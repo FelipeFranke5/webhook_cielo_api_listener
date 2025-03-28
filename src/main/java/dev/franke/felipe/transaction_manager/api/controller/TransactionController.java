@@ -25,4 +25,9 @@ public class TransactionController {
     public TransactionResponseDTO transaction(@PathVariable String id) {
         return transactionService.getTransactionById(id);
     }
+
+    @GetMapping("/{paymentId}/list")
+    public List<TransactionResponseDTO> transactionsByPayment(@PathVariable String paymentId) {
+        return transactionService.getListOfTransactionsByPayment(paymentId);
+    }
 }
