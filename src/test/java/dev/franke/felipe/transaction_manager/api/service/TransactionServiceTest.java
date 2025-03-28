@@ -1,11 +1,14 @@
 package dev.franke.felipe.transaction_manager.api.service;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import dev.franke.felipe.transaction_manager.api.dto.TransactionRequestDTO;
 import dev.franke.felipe.transaction_manager.api.exception.InvalidTransactionIdException;
 import dev.franke.felipe.transaction_manager.api.exception.TransactionNotFoundException;
+import dev.franke.felipe.transaction_manager.api.exception.TransactionServiceException;
 import dev.franke.felipe.transaction_manager.api.model.TransactionModel;
 import dev.franke.felipe.transaction_manager.api.repository.TransactionRepository;
 import java.util.List;
@@ -117,5 +120,58 @@ class TransactionServiceTest {
         assertDoesNotThrow(() -> transactionService.saveTransactionToDB(request));
         // Assert
         verify(transactionRepository).save(any(TransactionModel.class));
+    }
+
+    @Test
+    @DisplayName("Method 'getListOfTransactionsByPayment' - Valid Payment ID - Should Return List")
+    void getListOfTransactionsByPayment_ValidPaymentId_ShouldReturnList() {
+        // Arrange
+        EasyRandom generator = new EasyRandom();
+        TransactionModel transaction1 = generator.nextObject(TransactionModel.class);
+        TransactionModel transaction2 = generator.nextObject(TransactionModel.class);
+        List<TransactionModel> databaseReturn = List.of(transaction1, transaction2);
+        when(transactionRepository.findByPaymentId(anyString())).thenReturn(databaseReturn);
+
+        // Act
+        var actual = transactionService.getListOfTransactionsByPayment(
+                UUID.randomUUID().toString());
+
+        // Assert
+        assertNotNull(actual);
+        assertEquals(2, actual.size());
+        assertEquals(transaction1.getOrderId(), actual.get(0).data().orderId());
+        assertEquals(transaction2.getOrderId(), actual.get(1).data().orderId());
+    }
+
+    @Test
+    @DisplayName(
+            "Method 'getListOfTransactionsByPayment' - Invalid Payment ID - Should Throw TransactionServiceException")
+    void getListOfTransactionsByPayment_InvalidPaymentId_ShouldThrow() {
+        // Arrange
+        String invalidPaymentId = "invalid-payment-id";
+
+        // Act + Assert
+        assertThrows(
+                TransactionServiceException.class,
+                () -> transactionService.getListOfTransactionsByPayment(invalidPaymentId));
+    }
+
+    @Test
+    @DisplayName("Method 'streamToList' - Valid List - Should Convert Correctly")
+    void streamToList_ValidList_ShouldConvertCorrectly() {
+        // Arrange
+        EasyRandom generator = new EasyRandom();
+        TransactionModel transaction1 = generator.nextObject(TransactionModel.class);
+        TransactionModel transaction2 = generator.nextObject(TransactionModel.class);
+        List<TransactionModel> transactionList = List.of(transaction1, transaction2);
+
+        // Act
+        var actual = transactionService.streamToList(transactionList);
+
+        // Assert
+        assertNotNull(actual);
+        assertEquals(2, actual.size());
+        assertEquals(transaction1.getOrderId(), actual.get(0).data().orderId());
+        assertEquals(transaction2.getOrderId(), actual.get(1).data().orderId());
     }
 }

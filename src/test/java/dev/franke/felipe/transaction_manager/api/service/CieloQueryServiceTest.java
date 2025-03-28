@@ -6,6 +6,8 @@ import static org.mockito.Mockito.*;
 import dev.franke.felipe.transaction_manager.api.dto.cielo_query_response.CieloResponseDTO;
 import dev.franke.felipe.transaction_manager.api.dto.cielo_query_response.CieloResponsePaymentDTO;
 import dev.franke.felipe.transaction_manager.api.exception.CredentialsException;
+import dev.franke.felipe.transaction_manager.api.service.error_handler.ErrorToSaveService;
+import dev.franke.felipe.transaction_manager.api.service.error_handler.ServiceErrorHandler;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +28,12 @@ class CieloQueryServiceTest {
 
     @Mock
     private RestTemplate restTemplate;
+
+    @Mock
+    private ServiceErrorHandler errorHandler;
+
+    @Mock
+    private ErrorToSaveService errorService;
 
     @InjectMocks
     private CieloQueryService cieloQueryService;
