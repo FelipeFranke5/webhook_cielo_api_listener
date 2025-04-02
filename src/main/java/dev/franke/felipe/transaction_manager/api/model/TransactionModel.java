@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.UUID;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "acquirer_transactions")
@@ -31,6 +32,7 @@ public class TransactionModel {
     private Integer paymentStatus;
 
     @Column(name = "created_at")
+    @CreationTimestamp
     private OffsetDateTime createdAt;
 
     public TransactionModel() {}

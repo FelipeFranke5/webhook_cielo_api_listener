@@ -5,14 +5,13 @@ import dev.franke.felipe.transaction_manager.api.exception.CredentialsException;
 import dev.franke.felipe.transaction_manager.api.service.error_handler.ErrorToSaveService;
 import dev.franke.felipe.transaction_manager.api.service.error_handler.ServiceErrorHandler;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -21,8 +20,11 @@ public class CieloQueryService {
 
     private static final Logger logger = LoggerFactory.getLogger(CieloQueryService.class);
 
-    @Autowired
-    private ErrorToSaveService errorService;
+    private final ErrorToSaveService errorService;
+
+    public CieloQueryService(ErrorToSaveService errorToSaveService) {
+        this.errorService = errorToSaveService;
+    }
 
     @Value("${cielo.api.url.query}")
     private String baseURL;
@@ -34,10 +36,9 @@ public class CieloQueryService {
     private String merchantKey;
 
     private RestTemplate restTemplate;
-    private ServiceErrorHandler errorHandler;
 
     void checkCredentials() {
-        List<String> errors = new ArrayList<>();
+        final var errors = new ArrayList<>();
 
         if (this.getMerchantId() == null || this.getMerchantKey() == null) {
             errors.add("MerchantId or MerchantKey is required");
@@ -75,7 +76,7 @@ public class CieloQueryService {
         }
     }
 
-    boolean paymentIdIsValid(String paymentId) {
+    boolean paymentIdIsValid(final String paymentId) {
 
         if (paymentId == null || paymentId.isBlank() || paymentId.length() < 36) {
             logger.error("PaymentId is null, blank or invalid");
@@ -86,14 +87,15 @@ public class CieloQueryService {
         try {
             UUID.fromString(paymentId);
             return true;
-        } catch (IllegalArgumentException illegalArgumentException) {
+        } catch (final IllegalArgumentException illegalArgumentException) {
             logger.error("PaymentId is not valid UUID");
             logger.info("PaymentId: {}", paymentId);
             return false;
         }
     }
 
-    void saveErrorMessage(Exception exception, String paymentId, boolean test) {
+    void saveErrorMessage(final Exception exception, final String paymentId, final boolean test) {
+        Assert.notNull(exception, "exception cannot be null here");
         logger.error("Exception calling Cielo API. Message: {}", exception.getMessage());
         String message = "";
 
@@ -107,22 +109,22 @@ public class CieloQueryService {
 
         if (!test) {
             logger.error(message);
-            errorHandler = new ServiceErrorHandler(message, paymentId);
+            var errorHandler = new ServiceErrorHandler(message, paymentId);
             errorHandler.validate();
             errorService.persist(errorHandler);
         }
     }
 
-    CieloResponseDTO getCieloResponseDTO(String uri, String paymentId, boolean test) {
+    CieloResponseDTO getCieloResponseDTO(final String uri, final String paymentId, final boolean test) {
         try {
             return this.getRestTemplate().getForObject(uri, CieloResponseDTO.class);
-        } catch (Exception exception) {
+        } catch (final Exception exception) {
             saveErrorMessage(exception, paymentId, test);
             return null;
         }
     }
 
-    public CieloResponseDTO getTransaction(String paymentId, boolean test) {
+    public CieloResponseDTO getTransaction(final String paymentId, final boolean test) {
         logger.info("Initializing method to call Cielo API");
 
         if (!test) {
@@ -136,7 +138,7 @@ public class CieloQueryService {
             return null;
         }
 
-        String uri = baseURL + "/" + paymentId;
+        final var uri = baseURL + "/" + paymentId;
         return getCieloResponseDTO(uri, paymentId, test);
     }
 
@@ -157,7 +159,7 @@ public class CieloQueryService {
     }
 
     private void setRestTemplate() {
-        RestTemplateBuilder builder = new RestTemplateBuilder();
+        final var builder = new RestTemplateBuilder();
         restTemplate = builder.defaultHeader("MerchantId", this.getMerchantId())
                 .defaultHeader("MerchantKey", this.getMerchantKey())
                 .build();

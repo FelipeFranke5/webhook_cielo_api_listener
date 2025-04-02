@@ -13,5 +13,20 @@
     "name": "cielo.api.merchant.key",
     "type": "java.lang.String",
     "description": "Cielo Merchant Key for authentication"
+  },
+  {
+    "name": "custom.user.name",
+    "type": "java.lang.String",
+    "description": "Admin username"
+  },
+  {
+    "name": "custom.user.password",
+    "type": "java.lang.String",
+    "description": "Admin password"
+  },
+  {
+    "name": "custom.user.email",
+    "type": "java.lang.String",
+    "description": "Admin email"
   }
 ]}

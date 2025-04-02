@@ -25,12 +25,12 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public ConsumerFactory<String, String> consumerFactory() {
+    ConsumerFactory<String, String> consumerFactory() {
         return new DefaultKafkaConsumerFactory<>(consumerConfigurations());
     }
 
     @Bean
-    public Map<String, Object> consumerConfigurations() {
+    Map<String, Object> consumerConfigurations() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "weblistener");
